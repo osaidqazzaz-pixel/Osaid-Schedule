@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#070913">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="جدول مساقاتي">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>جدول مساقاتي</title>
+    <!-- استدعاء خط Tajawal الفخم -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        body {
+            background-color: #070913;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 40%);
+            color: #ffffff;
+            padding: 16px;
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        /* الهيدر العلوي بتصميم زجاجي فاخر */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: rgba(17, 24, 39, 0.75);
+            padding: 14px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            color: #60a5fa;
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
+        }
+
+        .user-info {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        /* شريط الأيام الفخم */
+        .days-nav {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 22px;
+            scrollbar-width: none;
+        }
+        .days-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .day-btn {
+            background: rgba(17, 24, 39, 0.8);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .day-btn.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border-color: #60a5fa;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* حاوية المحاضرات */
+        .lectures-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* محتوى الأيام (مخفي افتراضياً ويظهر عند اختيار اليوم) */
+        .day-content {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .day-content.active {
+            display: flex;
+        }
+
+        /* كرت المحاضرة بتأثير إضاءة خفيف وعصري */
+        .lecture-card {
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border-radius: 16px;
+            padding: 18px;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        /* ألوان مميزة لإطار كل محاضرة */
+        .lecture-card.l-blue { 
+            border-right: 6px solid #3b82f6; 
+            box-shadow: -5px 0 20px rgba(59, 130, 246, 0.15), 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        .lecture-card.l-green { 
+            border-right: 6px solid #10b981; 
+            box-shadow: -5px 0 20px rgba(16, 185, 129, 0.15), 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        .lecture-card.l-purple { 
+            border-right: 6px solid #8b5cf6; 
+            box-shadow: -5px 0 20px rgba(139, 92, 246, 0.15), 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        .lecture-card.l-orange { 
+            border-right: 6px solid #f59e0b; 
+            box-shadow: -5px 0 20px rgba(245, 158, 11, 0.15), 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .time-badge {
+            display: inline-block;
+            font-size: 0.85rem;
+            color: #93c5fd;
+            background: rgba(37, 99, 235, 0.2);
+            padding: 5px 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .lecture-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .lecture-details {
+            font-size: 0.92rem;
+            color: #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .lecture-details span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .no-lectures {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+            font-size: 1.1rem;
+            background: rgba(17, 24, 39, 0.4);
+            border-radius: 16px;
+            border: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        .install-app-btn {
+            position: fixed;
+            bottom: max(18px, env(safe-area-inset-bottom));
+            left: 18px;
+            z-index: 1000;
+            border: 1px solid rgba(96,165,250,.55);
+            border-radius: 999px;
+            padding: 12px 17px;
+            color: #fff;
+            background: linear-gradient(135deg,#2563eb,#1d4ed8);
+            box-shadow: 0 8px 24px rgba(37,99,235,.35);
+            font-size: .9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .install-app-btn[hidden] { display: none; }
+        @media (display-mode: standalone) {
+            .install-app-btn { display: none !important; }
+            body { padding-top: max(16px, env(safe-area-inset-top)); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>جدول مساقاتي</h1>
+        <div class="user-info">أهلاً بك، أُسيد</div>
+    </div>
+
+    <!-- أزرار الأيام التفاعلية -->
+    <div class="days-nav">
+        <button class="day-btn active" onclick="switchDay('sunday', this)">الأحد</button>
+        <button class="day-btn" onclick="switchDay('monday', this)">الاثنين</button>
+        <button class="day-btn" onclick="switchDay('tuesday', this)">الثلاثاء</button>
+        <button class="day-btn" onclick="switchDay('wednesday', this)">الأربعاء</button>
+        <button class="day-btn" onclick="switchDay('thursday', this)">الخميس</button>
+    </div>
+
+    <!-- حاوية المحاضرات -->
+    <div class="lectures-container">
+        
+        <!-- محاضرات يوم الأحد -->
+        <div id="sunday" class="day-content active">
+            <div class="lecture-card l-blue">
+                <div class="time-badge">08:30 - 10:00</div>
+                <div class="lecture-title">نظم التشغيل</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (319 Lab10)</span>
+                    <span>👨‍🏫 المدرس: صفاء إبراهيم محمد عادي</span>
+                </div>
+            </div>
+
+            <div class="lecture-card l-green">
+                <div class="time-badge">10:00 - 11:30</div>
+                <div class="lecture-title">تصميم صفحات الويب والإنترنت</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (319 Lab10)</span>
+                    <span>👨‍🏫 المدرس: وهيبه محمد عمر صلاح يغمور</span>
+                </div>
+            </div>
+
+            <div class="lecture-card l-purple">
+                <div class="time-badge">12:00 - 13:00</div>
+                <div class="lecture-title">نظم التشغيل (محاضرة أخرى)</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (310 A)</span>
+                </div>
+            </div>
+
+            <div class="lecture-card l-orange">
+                <div class="time-badge">13:00 - 14:00</div>
+                <div class="lecture-title">العمل الحر والتسويق الإلكتروني</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (210 A)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- محاضرات يوم الاثنين -->
+        <div id="monday" class="day-content">
+            <div class="lecture-card l-blue">
+                <div class="time-badge">10:00 - 12:00</div>
+                <div class="lecture-title">المتحكمات الدقيقة</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (014 Lab1 A)</span>
+                    <span>👨‍🏫 المدرس: إسراء رضوان محمد الشرباتي</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- محاضرات يوم الثلاثاء -->
+        <div id="tuesday" class="day-content">
+            <div class="lecture-card l-green">
+                <div class="time-badge">10:00 - 11:00</div>
+                <div class="lecture-title">تحليل وتصميم النظم</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (202 A+)</span>
+                </div>
+            </div>
+
+            <div class="lecture-card l-purple">
+                <div class="time-badge">12:00 - 14:00</div>
+                <div class="lecture-title">تصميم صفحات الويب والإنترنت</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (319 Lab10 A)</span>
+                    <span>👨‍🏫 المدرس: وهيبه محمد عمر صلاح يغمور</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- محاضرات يوم الأربعاء -->
+        <div id="wednesday" class="day-content">
+            <div class="lecture-card l-blue">
+                <div class="time-badge">10:00 - 12:00</div>
+                <div class="lecture-title">المتحكمات الدقيقة</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (014 Lab1 A)</span>
+                    <span>👨‍🏫 المدرس: إسراء رضوان محمد الشرباتي</span>
+                </div>
+            </div>
+
+            <div class="lecture-card l-orange">
+                <div class="time-badge">14:00 - 16:00</div>
+                <div class="lecture-title">العمل الحر والتسويق الإلكتروني</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (219 IMMAPU A)</span>
+                    <span>👨‍🏫 المدرس: ساره وسام ربحي شموخ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- محاضرات يوم الخميس -->
+        <div id="thursday" class="day-content">
+            <div class="lecture-card l-blue">
+                <div class="time-badge">10:00 - 11:00</div>
+                <div class="lecture-title">تحليل وتصميم النظم</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (108 A)</span>
+                </div>
+            </div>
+
+            <div class="lecture-card l-green">
+                <div class="time-badge">12:00 - 13:00</div>
+                <div class="lecture-title">نظم التشغيل</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (310 A)</span>
+                </div>
+            </div>
+
+            <div class="lecture-card l-orange">
+                <div class="time-badge">13:00 - 14:00</div>
+                <div class="lecture-title">العمل الحر والتسويق الإلكتروني</div>
+                <div class="lecture-details">
+                    <span>📍 المكان: وادي الهوية (210 A)</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <button id="installAppBtn" class="install-app-btn" hidden>＋ تثبيت التطبيق</button>
+
+    <script>
+        let deferredInstallPrompt = null;
+        const installAppBtn = document.getElementById('installAppBtn');
+
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            installAppBtn.hidden = false;
+        });
+
+        installAppBtn.addEventListener('click', async () => {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                await deferredInstallPrompt.userChoice;
+                deferredInstallPrompt = null;
+                installAppBtn.hidden = true;
+            } else {
+                alert('على iPhone: افتح زر المشاركة في Safari ثم اختر "إضافة إلى الشاشة الرئيسية".');
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installAppBtn.hidden = true;
+            deferredInstallPrompt = null;
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+            });
+        }
+
+        function switchDay(dayId, btnElement) {
+            document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.day-content').forEach(content => content.classList.remove('active'));
+
+            btnElement.classList.add('active');
+            document.getElementById(dayId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
